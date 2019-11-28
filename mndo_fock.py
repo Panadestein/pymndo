@@ -1,5 +1,5 @@
-"""This module ensambles the Fock Matrix using the ERIs and the
-core-core repulsion energy for the MNDO method:
+"""This module ensambles the Fock Matrix using the ERIs, the one center integrals,
+and the core-core repulsion energy for the MNDO method:
 
     Dewar, M. J. S.; Thiel, W. Ground States of Molecules. 38. The MNDO
     Method. Approximations and Parameters, J. Am. Chem. Soc. 1977,
@@ -10,3 +10,52 @@ core-core repulsion energy for the MNDO method:
     approximation. International journal of quantum chemistry, 118(24), e25799.
 
 """
+import json
+from math import factorial
+import numpy as np
+
+# Load relevant files (MNDO parameters, ERIs multipoles, etc.)
+
+with open('./SYSTEMS/mndo_params.json', 'r') as mndopar:
+    PARAMS = json.load(mndopar)
+with open('./SYSTEMS/element.json', 'r') as elems:
+    ATOMS = json.load(elems)
+
+# One electron integrals
+
+class OneElectronMatrix():
+    """Assembles the one electron integrals for the system of interest"""
+    def __init__(self, atoms=None):
+        self.atoms = atoms
+        self.h_mndo = self.get_one_center() + self.get_two_center()
+        self.spinorb = self.__set_spinorb()
+    def __set_spinorb(self):
+        """Set the spin-orbitals involved in the calculation"""
+        sporb = []
+        for ats in self.atoms:
+            for orbs in ATOMS['element'][str(ats)][3]:
+                sporb.append(str(ats) + "_" + orbs)
+        return sporb
+    def get_one_center(self):
+        """Returns the one-center matrix"""
+        h_one = np.zeros((self.spinorb, self.spinorb))
+        for miu, labelmu in enumerate(self.spinorb):
+            for niu, _ in enumerate(self.spinorb):
+                if miu == niu:
+                    atom_i, orb_i = labelmu.split("_")
+                    if "s" in orb_i:
+                        h_one[miu, niu] = PARAMS['elements'][atom_i]['uss']
+                    else:
+                        h_one[miu, niu] = PARAMS['elements'][atom_i]['upp']
+                else:
+                    h_one[miu, niu] = 0
+    def get_two_center(self):
+        """Returns the two-center matrix"""
+        h_two = []
+        return np.array(h_two)
+
+# Two electron integrals (ERIs)
+
+# Core-Core repulsion energy
+
+# Fock matrix
