@@ -66,8 +66,8 @@ class MultiPole():
         ket --> charge density corresponding to atom_b
         """
         eri = 0
-        dens_bra = self.bra[0][1] + self.bra[1][1]
-        dens_ket = self.ket[0][1] + self.ket[1][1]
+        dens_bra = self.bra[0][1:] + self.bra[1][1:]
+        dens_ket = self.ket[0][1:] + self.ket[1][1:]
         for idx_bra, charg_bra in enumerate(MPOLES["charge_dist"][dens_bra][0]):
             for idx_ket, charg_ket in enumerate(MPOLES["charge_dist"][dens_ket][0]):
                 pho_bra = get_rho(MPOLES["charge_dist"][dens_bra][1][idx_bra],
@@ -138,6 +138,8 @@ def get_rho(v_pho, bra, atom):
 
     d_dip_sp = a_func(bra, atom, 1) / np.sqrt(3)
     d_qad_pp = np.sqrt(a_func(bra, atom, 2)) / np.sqrt(5)
+    print(v_pho)
+    print(d_qad_pp)
 
     pho = None
     if v_pho == "v_qss":
@@ -149,7 +151,7 @@ def get_rho(v_pho, bra, atom):
     elif v_pho == "v_musp":
         pho_0 = (PARAMS["elements"][atom]["hsp"] /
                  (EVAU * d_dip_sp ** 2)) ** (1 / 3)
-        pho_1 = 0
+        pho_1 = pho_0 + 0.1
         while True:
             a_0 = 0.5 * pho_0 - 0.5 * (4 * d_dip_sp ** 2 + pho_0 ** -2) ** -0.5
             a_1 = 0.5 * pho_1 - 0.5 * (4 * d_dip_sp ** 2 + pho_1 ** -2) ** -0.5
@@ -158,13 +160,13 @@ def get_rho(v_pho, bra, atom):
                 (a_1 - a_0))
             if pho - pho_1 <= 1e-6:
                 break
-            pho_1 = pho
             pho_0 = pho_1
+            pho_1 = pho
 
     elif v_pho == "v_Qpp":
         pho_0 = (PARAMS["elements"][atom]["hsp"] /
                  (EVAU * 3 * d_qad_pp ** 4)) ** (1 / 5)
-        pho_1 = 0
+        pho_1 = pho_0 + 0.1
         while True:
             a_0 = 0.25 * pho_0 - 0.5 * (4 * d_qad_pp ** 2 +
                                         pho_0 ** -2) ** (-1 / 2) +\
@@ -177,12 +179,12 @@ def get_rho(v_pho, bra, atom):
                 (a_1 - a_0))
             if pho - pho_1 <= 1e-6:
                 break
-            pho_1 = pho
             pho_0 = pho_1
+            pho_1 = pho
 
     return pho
 
 # Test with H2
 
-H2MPOLE = MultiPole("1", "1")
+H2MPOLE = MultiPole("6", "1", ("2py", "2pz"))
 print(H2MPOLE.eval_eri())

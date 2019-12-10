@@ -28,7 +28,7 @@ class Molecule:
         """Extract coordinates from input geometry"""
         coord = []
         for z_coord in self.geometry:
-            coord.append(z_coord[1:])
+            coord.append(z_coord[1])
         return np.array(coord)
     def get_amass(self):
         """Get the atomic masses of the atoms involved in the calculation"""
@@ -42,3 +42,10 @@ class Molecule:
         for z_coord in self.geometry:
             qcore.append(ATOMS['element'][str(z_coord[0])][2])
         return qcore
+
+if __name__ == "__main__":
+    H2O_MOL = Molecule('H2O', [(8, (0.00000000, 0.00000000, 0.04851804)),
+                               (1, (0.75300223, 0.00000000, -0.51923377)),
+                               (1, (-0.75300223, 0.00000000, -0.51923377))],
+                       charge=1, multiplicity=2)
+    print(H2O_MOL.coords)
