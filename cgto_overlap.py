@@ -21,6 +21,7 @@ with open('./SYSTEMS/mndo_params.json', 'r') as mndopar:
 
 # Class containing a contracted GTOs expansion of the STOs
 
+
 class ContrGTO():
     """Contains the definition of a GTO expansion for an
     STO-6G. Makes use of the properties of Hermite Gaussians"""
@@ -47,13 +48,14 @@ class ContrGTO():
         n_fact = 0.0
         n_exps = range(len(self.exps))
         coeff_n = np.power(np.pi, 1.5) * dfact(2 * l_i - 1) *\
-                dfact(2 * m_i - 1) * dfact(2 * n_i - 1) / 2 ** l_total
+            dfact(2 * m_i - 1) * dfact(2 * n_i - 1) / 2 ** l_total
 
         for idx_a in n_exps:
             for idx_b in n_exps:
                 n_fact += self.norm[idx_a] * self.norm[idx_b] *\
                         self.coeff[idx_a] * self.coeff[idx_b] /\
-                        np.power(self.exps[idx_a] + self.exps[idx_b], l_total + 1.5)
+                        np.power(self.exps[idx_a] + self.exps[idx_b],
+                                 l_total + 1.5)
 
         n_fact *= coeff_n
         n_fact = np.power(n_fact, -0.5)
@@ -62,6 +64,7 @@ class ContrGTO():
             self.coeff[idx_a] *= n_fact
 
 # Compute overlap between two CGTOs
+
 
 def dfact(n_num):
     """Double factorial"""
@@ -150,31 +153,27 @@ def s_matrix(molecule):
     s_mat = np.zeros((len(row), len(row)))
     for idx_a, chi_a in enumerate(row):
         for idx_b, chi_b in enumerate(row):
-            if idx_a <= idx_b:
-                if "s" in chi_a:
-                    zeta_a = PARAMS["elements"][chi_a.split("_")[0]]["zs"]
-                else:
-                    zeta_a = PARAMS["elements"][chi_a.split("_")[0]]["zp"]
-                coeff_a = np.array(STO6G[chi_a.split("_")[1][:2]]["coeff"])
-                exp_a = np.array(STO6G[chi_a.split("_")[1][:2]]["exp"]) * zeta_a
-                origin_a = molecule.coords[int(chi_a.split("_")[2])]
-                shell_a = get_shell(chi_a.split("_")[1])
-
-                if "s" in chi_b:
-                    zeta_b = PARAMS["elements"][chi_b.split("_")[0]]["zs"]
-                else:
-                    zeta_b = PARAMS["elements"][chi_b.split("_")[0]]["zp"]
-                coeff_b = np.array(STO6G[chi_b.split("_")[1][:2]]["coeff"])
-                exp_b = np.array(STO6G[chi_b.split("_")[1][:2]]["exp"]) * zeta_b
-                origin_b = molecule.coords[int(chi_b.split("_")[2])]
-                shell_b = get_shell(chi_b.split("_")[1])
-
-                gau_a = ContrGTO(exp_a, coeff_a, origin_a, shell_a)
-                gau_b = ContrGTO(exp_b, coeff_b, origin_b, shell_b)
-                s_mat[idx_a, idx_b] = s_ij(gau_a, gau_b)
+            if "s" in chi_a:
+                zeta_a = PARAMS["elements"][chi_a.split("_")[0]]["zs"]
             else:
-                #  s_mat[idx_b, idx_a] = s_mat[idx_a, idx_b]
-                s_mat[idx_b, idx_a] = 5
+                zeta_a = PARAMS["elements"][chi_a.split("_")[0]]["zp"]
+            coeff_a = np.array(STO6G[chi_a.split("_")[1][:2]]["coeff"])
+            exp_a = np.array(STO6G[chi_a.split("_")[1][:2]]["exp"]) * zeta_a
+            origin_a = molecule.coords[int(chi_a.split("_")[2])]
+            shell_a = get_shell(chi_a.split("_")[1])
+
+            if "s" in chi_b:
+                zeta_b = PARAMS["elements"][chi_b.split("_")[0]]["zs"]
+            else:
+                zeta_b = PARAMS["elements"][chi_b.split("_")[0]]["zp"]
+            coeff_b = np.array(STO6G[chi_b.split("_")[1][:2]]["coeff"])
+            exp_b = np.array(STO6G[chi_b.split("_")[1][:2]]["exp"]) * zeta_b
+            origin_b = molecule.coords[int(chi_b.split("_")[2])]
+            shell_b = get_shell(chi_b.split("_")[1])
+
+            gau_a = ContrGTO(exp_a, coeff_a, origin_a, shell_a)
+            gau_b = ContrGTO(exp_b, coeff_b, origin_b, shell_b)
+            s_mat[idx_a, idx_b] = s_ij(gau_a, gau_b)
 
     return s_mat
 

@@ -18,6 +18,7 @@ import numpy as np
 import scipy.constants as sc
 
 # Define constants
+
 EVAU = sc.physical_constants['atomic unit of electric potential'][0]
 
 # Load relevant files (MNDO parameters, ERIs multipoles, etc.)
@@ -138,8 +139,6 @@ def get_rho(v_pho, bra, atom):
 
     d_dip_sp = a_func(bra, atom, 1) / np.sqrt(3)
     d_qad_pp = np.sqrt(a_func(bra, atom, 2)) / np.sqrt(5)
-    print(v_pho)
-    print(d_qad_pp)
 
     pho = None
     if v_pho == "v_qss":
@@ -170,10 +169,10 @@ def get_rho(v_pho, bra, atom):
         while True:
             a_0 = 0.25 * pho_0 - 0.5 * (4 * d_qad_pp ** 2 +
                                         pho_0 ** -2) ** (-1 / 2) +\
-            0.25 *(8 * d_qad_pp ** 2 + pho_0 ** -2) ** (-1 / 2)
+            0.25 * (8 * d_qad_pp ** 2 + pho_0 ** -2) ** (-1 / 2)
             a_1 = 0.25 * pho_1 - 0.5 * (4 * d_qad_pp ** 2 +
                                         pho_1 ** -2) ** (-1 / 2) +\
-            0.25 *(8 * d_qad_pp ** 2 + pho_1 ** -2) ** (-1 / 2)
+            0.25 * (8 * d_qad_pp ** 2 + pho_1 ** -2) ** (-1 / 2)
             pho = pho_0 + (pho_1 - pho_0) * (
                 (PARAMS["elements"][atom]["hsp"] / EVAU - a_0) /
                 (a_1 - a_0))
@@ -184,7 +183,9 @@ def get_rho(v_pho, bra, atom):
 
     return pho
 
+
 # Test with H2
 
-H2MPOLE = MultiPole("6", "1", ("2py", "2pz"))
-print(H2MPOLE.eval_eri())
+if __name__ == "__main__":
+    H2MPOLE = MultiPole("6", "1", ("2py", "2pz"))
+    print(H2MPOLE.eval_eri())
