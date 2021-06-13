@@ -1,4 +1,4 @@
-"""This module ensambles the Fock Matrix using the ERIs, the one center integrals,
+"""This module ensembles the Fock Matrix using the ERIs, the one center integrals,
 and the core-core repulsion energy for the MNDO method:
 
     Dewar, M. J. S.; Thiel, W. Ground States of Molecules. 38. The MNDO
@@ -17,6 +17,8 @@ from molecule import Molecule
 from mndo_multipole import MultiPole
 from cgto_overlap import s_matrix
 
+np.set_printoptions(linewidth=np.nan)
+
 # Load relevant files (MNDO parameters, ERIs multipoles, etc.)
 
 with open('./SYSTEMS/mndo_params.json', 'r') as mndopar:
@@ -32,7 +34,7 @@ class OneElectronMatrix():
     def __init__(self, molecule=None):
         self.molecule = molecule
         self.atoms = molecule.atoms
-        self.h_mndo = self.get_one_center()  #  + self.get_two_center()
+        self.h_mndo = self.get_one_center() + self.get_two_center()
 
     def get_one_center(self):
         """Returns the one-center matrix"""
@@ -48,34 +50,46 @@ class OneElectronMatrix():
                             h_one[miu, niu] = PARAMS['elements'][str(atom_i)]['uss']
                         else:
                             h_one[miu, niu] = PARAMS['elements'][str(atom_i)]['upp']
+                        klopman_one = 0
+                        for atom_j in self.atoms:
+                            q_j = ATOMS['elements'][str(atom_i)][2]
+                            if atom_j != atom_i:
+                                klopman_one -= q_j * MultiPole(atom_i, atom_j,
+                                                         bra=(labelmu, labelnu),
+                                                         ket=("1s", "1s")).eval_eri()
+                        h_one[miu, niu] += klopman_one
                     else:
                         h_one[miu, niu] = 0
 
-                    klopman_one = 0
-                    for atom_j in self.atoms:
-                        q_j = ATOMS['elements'][str(atom_i)][2]
-                        if atom_j != atom_i:
-                            klopman_one -= q_j * MultiPole(atom_i, atom_j,
-                                                     bra=(labelmu, labelnu),
-                                                     ket=("1s", "1s")).eval_eri()
-
-                    h_one[miu, niu] += klopman_one
             hmats.append(h_one)
-
         return block_diag(*hmats)
 
     def get_two_center(self):
         """Returns the two-center matrix"""
-        h_two = []
         smat = s_matrix(self.molecule)
-        row = col = 0
+        row = 0
         for atom_i in self.atoms:
             orbs_i = ATOMS['elements'][str(atom_i)][3]
-            for atom_j in self.atoms:
-                orbs_j = ATOMS['elements'][str(atom_j)][3]
-                if atom_i != atom_j:
-                    pass
-        return np.array(h_two)
+            for labelmu in orbs_i:
+                col = 0
+                for atom_j in self.atoms:
+                    orbs_j = ATOMS['elements'][str(atom_j)][3]
+                    for labelnu in orbs_j:
+                        if atom_i != atom_j:
+                            if "s" in labelmu:
+                                betamu = PARAMS['elements'][str(atom_i)]['uss']
+                            else:
+                                betamu = PARAMS['elements'][str(atom_i)]['upp']
+                            if "s" in labelnu:
+                                betanu = PARAMS['elements'][str(atom_j)]['uss']
+                            else:
+                                betanu = PARAMS['elements'][str(atom_j)]['upp']
+                            smat[row, col] *= 0.5 * (betamu + betanu)
+                        else:
+                            smat[row, col] = 0
+                        col += 1
+                row += 1
+        return smat
 
 # Two electron integrals (ERIs)
 
@@ -93,4 +107,6 @@ if __name__ == "__main__":
                                (1, (-0.75300223, 0.00000000, -0.51923377))],
                        charge=1, multiplicity=2)
     AB = OneElectronMatrix(H2O_MOL)
+    print(AB.get_one_center())
+    print(AB.get_two_center())
     print(AB.h_mndo)
