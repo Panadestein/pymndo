@@ -12,7 +12,10 @@ and the core-core repulsion energy for the MNDO method:
 """
 import json
 import numpy as np
+from scipy.linalg import block_diag
+from molecule import Molecule
 from mndo_multipole import MultiPole
+from cgto_overlap import s_matrix
 
 # Load relevant files (MNDO parameters, ERIs multipoles, etc.)
 
@@ -26,47 +29,52 @@ with open('./SYSTEMS/element.json', 'r') as elems:
 
 class OneElectronMatrix():
     """Assembles the one electron integrals for the system of interest"""
-    def __init__(self, atoms=None):
-        self.atoms = atoms
-        self.spinorb = self.__set_spinorb()
+    def __init__(self, molecule=None):
+        self.molecule = molecule
+        self.atoms = molecule.atoms
         self.h_mndo = self.get_one_center()  #  + self.get_two_center()
-
-    def __set_spinorb(self):
-        """Set the spin-orbitals involved in the calculation"""
-        sporb = []
-        for ats in self.atoms:
-            for orbs in ATOMS['elements'][str(ats)][3]:
-                sporb.append(str(ats) + "_" + orbs)
-        return sporb
 
     def get_one_center(self):
         """Returns the one-center matrix"""
-        spinlen = len(self.spinorb)
-        h_one = np.zeros((spinlen, spinlen))
-        for miu, labelmu in enumerate(self.spinorb):
-            for niu, _ in enumerate(self.spinorb):
-                atom_i, orb_i = labelmu.split("_")
-                if miu == niu:
-                    if "s" in orb_i:
-                        h_one[miu, niu] = PARAMS['elements'][atom_i]['uss']
+        hmats = []
+        for atom_i in self.atoms:
+            orbs = ATOMS['elements'][str(atom_i)][3]
+            h_one = np.zeros((len(orbs), len(orbs)))
+            for miu, labelmu in enumerate(orbs):
+                for niu, labelnu in enumerate(orbs):
+                    orb_i = labelmu.split("_")[0]
+                    if miu == niu:
+                        if "s" in orb_i:
+                            h_one[miu, niu] = PARAMS['elements'][str(atom_i)]['uss']
+                        else:
+                            h_one[miu, niu] = PARAMS['elements'][str(atom_i)]['upp']
                     else:
-                        h_one[miu, niu] = PARAMS['elements'][atom_i]['upp']
-                else:
-                    h_one[miu, niu] = 0
+                        h_one[miu, niu] = 0
 
-                klopman_one = 0
-                for atom_j in self.atoms:
-                    if atom_j != atom_i:
-                        klopman_one += MultiPole(atom_i, atom_j,
-                                                 bra=("1s", "1s")).eval_eri()
+                    klopman_one = 0
+                    for atom_j in self.atoms:
+                        q_j = ATOMS['elements'][str(atom_i)][2]
+                        if atom_j != atom_i:
+                            klopman_one -= q_j * MultiPole(atom_i, atom_j,
+                                                     bra=(labelmu, labelnu),
+                                                     ket=("1s", "1s")).eval_eri()
 
-                h_one[miu, niu] += klopman_one
+                    h_one[miu, niu] += klopman_one
+            hmats.append(h_one)
 
-        return h_one
+        return block_diag(*hmats)
 
     def get_two_center(self):
         """Returns the two-center matrix"""
         h_two = []
+        smat = s_matrix(self.molecule)
+        row = col = 0
+        for atom_i in self.atoms:
+            orbs_i = ATOMS['elements'][str(atom_i)][3]
+            for atom_j in self.atoms:
+                orbs_j = ATOMS['elements'][str(atom_j)][3]
+                if atom_i != atom_j:
+                    pass
         return np.array(h_two)
 
 # Two electron integrals (ERIs)
@@ -79,5 +87,10 @@ class OneElectronMatrix():
 
 
 if __name__ == "__main__":
-    AB = OneElectronMatrix([1, 1])
+    # Test with the H2O molecule
+    H2O_MOL = Molecule('H2O', [(8, (0.00000000, 0.00000000, 0.04851804)),
+                               (1, (0.75300223, 0.00000000, -0.51923377)),
+                               (1, (-0.75300223, 0.00000000, -0.51923377))],
+                       charge=1, multiplicity=2)
+    AB = OneElectronMatrix(H2O_MOL)
     print(AB.h_mndo)

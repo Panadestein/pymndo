@@ -7,9 +7,15 @@
 		"spx": [["mux"], ["v_musp"]],
 		"spy": [["muy"], ["v_musp"]],
 		"spz": [["muz"], ["v_musp"]],
+		"pxs": [["mux"], ["v_musp"]],
+		"pys": [["muy"], ["v_musp"]],
+		"pzs": [["muz"], ["v_musp"]],
 		"pxpy": [["Qxy"], ["v_Qpp"]],
 		"pxpz": [["Qxz"], ["v_Qpp"]],
-		"pypz": [["Qyz"], ["v_Qpp"]]
+		"pypz": [["Qyz"], ["v_Qpp"]],
+		"pypx": [["Qxy"], ["v_Qpp"]],
+		"pzpx": [["Qxz"], ["v_Qpp"]],
+		"pzpy": [["Qyz"], ["v_Qpp"]]
 	},
 	"charge_posi":{
 		"q": [[0, 0, 0, 1.0]],

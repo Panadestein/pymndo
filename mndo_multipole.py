@@ -93,6 +93,8 @@ def a_func(bra, atom, a_par):
     n_mu = int(bra[0][0])
     n_nu = int(bra[1][0])
 
+    atom = str(atom)
+
     if "s" in bra[0]:
         zeta_mu = PARAMS["elements"][atom]["zs"]
     elif "p" in bra[0]:
@@ -139,6 +141,8 @@ def get_rho(v_pho, bra, atom):
 
     d_dip_sp = a_func(bra, atom, 1) / np.sqrt(3)
     d_qad_pp = np.sqrt(a_func(bra, atom, 2)) / np.sqrt(5)
+
+    atom = str(atom)
 
     pho = None
     if v_pho == "v_qss":
